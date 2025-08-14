@@ -51,7 +51,7 @@ function Hero() {
           >
             <h1 className={`relative text-4xl font-bold text-white md:text-6xl ${isLoaded ? 'tech-glitch-text' : ''}`}>
               <span className="tech-bracket relative text-gray-300">{"<"}</span>
-              <span className="tech-intro relative">Hi, I'm </span> 
+              <span className="tech-intro relative">Hi, I`m </span> 
               <span className="tech-name relative">
                 {/* <span className={`tech-name-text font-mono ${isLoaded ? 'tech-glitch-active' : ''}`}>Syed Adnan Ali</span> */}
                 {isLoaded && (
