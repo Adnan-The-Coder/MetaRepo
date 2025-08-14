@@ -13,7 +13,7 @@ function Experience() {
     },
     {
       id: 2,
-      period: "10-24 - Now",
+      period: "10-24 - 07-25",
       company: "Entrepreneurship Cell, MJCET",
       role: "TECH CAPTAIN",
       description: "Developed and refactored Web technologies"
