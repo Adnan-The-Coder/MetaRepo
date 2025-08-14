@@ -97,7 +97,7 @@ function Contact() {
                         Get In <span className="text-cyan-400">Touch</span>
                     </h2>
                     <p className="text-gray-400">
-                        Have a project in mind or want to collaborate? Let's talk!
+                        Have a project in mind or want to collaborate? Let`s talk!
                     </p>
                 </motion.div>
                 <div className="max-w-3xl mx-auto">
