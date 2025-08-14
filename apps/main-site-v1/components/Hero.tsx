@@ -53,10 +53,10 @@ function Hero() {
               <span className="tech-bracket relative text-gray-300">{"<"}</span>
               <span className="tech-intro relative">Hi, I'm </span> 
               <span className="tech-name relative">
-                <span className={`tech-name-text font-mono ${isLoaded ? 'tech-glitch-active' : ''}`}>Syed Adnan Ali</span>
+                {/* <span className={`tech-name-text font-mono ${isLoaded ? 'tech-glitch-active' : ''}`}>Syed Adnan Ali</span> */}
                 {isLoaded && (
                   <>
-                    <span className="tech-name-ghost tech-ghost-1 font-mono">Syed Adnan Ali</span>
+                    {/* <span className="tech-name-ghost tech-ghost-1 font-mono">Syed Adnan Ali</span> */}
                     <span className="tech-name-ghost tech-ghost-2 font-mono">Syed Adnan Ali</span>
                     <span className="tech-highlight"></span>
                     <span className="tech-scan-line"></span>
