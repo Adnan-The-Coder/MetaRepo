@@ -141,28 +141,28 @@ return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
       update() {
         // Mouse repulsion effect
         if (mouse.x !== undefined && mouse.y !== undefined) {
-          let dx = mouse.x - this.x;
-          let dy = mouse.y - this.y;
-          let distance = Math.sqrt(dx * dx + dy * dy);
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < mouse.radius) {
-            let forceDirectionX = dx / distance;
-            let forceDirectionY = dy / distance;
-            let maxDistance = mouse.radius;
-            let force = (maxDistance - distance) / maxDistance;
-            let directionX = forceDirectionX * force * this.density * -1.5; // Stronger repulsion
-            let directionY = forceDirectionY * force * this.density * -1.5;
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+            const maxDistance = mouse.radius;
+            const force = (maxDistance - distance) / maxDistance;
+            const directionX = forceDirectionX * force * this.density * -1.5; // Stronger repulsion
+            const directionY = forceDirectionY * force * this.density * -1.5;
             
             this.x += directionX;
             this.y += directionY;
           } else {
             // Return to original position with slight drift
             if (this.x !== this.baseX) {
-              let dx = this.x - this.baseX;
+              const dx = this.x - this.baseX;
               this.x -= dx / 15;
             }
             if (this.y !== this.baseY) {
-              let dy = this.y - this.baseY;
+              const dy = this.y - this.baseY;
               this.y -= dy / 15;
             }
           }
@@ -248,7 +248,7 @@ return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
             const flowOffset = (a * b) % 10;
             const flowPhase = (flowSpeed + flowOffset) % 1;
             
-            let opacityValue = 1 - (distance / connectionDistance);
+            const opacityValue = 1 - (distance / connectionDistance);
             
             // Data flow effect - brighter parts moving along connections
             if (particlesArray[a].dataGlow || particlesArray[b].dataGlow) {
