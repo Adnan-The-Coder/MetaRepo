@@ -9,7 +9,7 @@
     "lint": "next lint",
     "pages:build": "pnpm exec next-on-pages",
     "preview": "pnpm run pages:build && wrangler pages dev",
-    "deploy": "pnpm run pages:build && wrangler pages deploy"
+    "deploy": "pnpm run pages:build && pnpm exec wrangler pages deploy"
   },
   "dependencies": {
     "@react-three/drei": "^9.99.0",
