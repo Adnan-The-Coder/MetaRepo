@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
@@ -27,16 +26,18 @@ const CyberParticleBackground = () => {
     };
 
     window.addEventListener('resize', handleResize);
-    
-return () => window.removeEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
-    if (!canvasRef.current || dimensions.width === 0) return;
+    if (!canvasRef.current || dimensions.width === 0)
+       return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) 
+      return;
 
     // Set canvas dimensions
     canvas.width = dimensions.width;
@@ -45,8 +46,8 @@ return () => window.removeEventListener('resize', handleResize);
     // Calculate particle density based on screen size
     const getParticleCount = () => {
       const baseDensity = dimensions.width * dimensions.height / 15000;
-      
-return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
+
+      return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
     };
 
     // Create particles
@@ -141,28 +142,28 @@ return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
       update() {
         // Mouse repulsion effect
         if (mouse.x !== undefined && mouse.y !== undefined) {
-          const dx = mouse.x - this.x;
-          const dy = mouse.y - this.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          let dx = mouse.x - this.x;
+          let dy = mouse.y - this.y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < mouse.radius) {
-            const forceDirectionX = dx / distance;
-            const forceDirectionY = dy / distance;
-            const maxDistance = mouse.radius;
-            const force = (maxDistance - distance) / maxDistance;
-            const directionX = forceDirectionX * force * this.density * -1.5; // Stronger repulsion
-            const directionY = forceDirectionY * force * this.density * -1.5;
+            let forceDirectionX = dx / distance;
+            let forceDirectionY = dy / distance;
+            let maxDistance = mouse.radius;
+            let force = (maxDistance - distance) / maxDistance;
+            let directionX = forceDirectionX * force * this.density * -1.5; // Stronger repulsion
+            let directionY = forceDirectionY * force * this.density * -1.5;
             
             this.x += directionX;
             this.y += directionY;
           } else {
             // Return to original position with slight drift
             if (this.x !== this.baseX) {
-              const dx = this.x - this.baseX;
+              let dx = this.x - this.baseX;
               this.x -= dx / 15;
             }
             if (this.y !== this.baseY) {
-              const dy = this.y - this.baseY;
+              let dy = this.y - this.baseY;
               this.y -= dy / 15;
             }
           }
@@ -248,7 +249,7 @@ return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
             const flowOffset = (a * b) % 10;
             const flowPhase = (flowSpeed + flowOffset) % 1;
             
-            const opacityValue = 1 - (distance / connectionDistance);
+            let opacityValue = 1 - (distance / connectionDistance);
             
             // Data flow effect - brighter parts moving along connections
             if (particlesArray[a].dataGlow || particlesArray[b].dataGlow) {
@@ -288,7 +289,7 @@ return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
       const characters = "01";
       const fontSize = 10;
       const columns = Math.floor(canvas.width / fontSize);
-      const rainDrops = Array(columns).fill(1);
+      // const _rainDrops = Array(columns).fill(1);
       
       // Only draw occasionally for subtle effect
       if (Math.random() > 0.95) {
@@ -336,7 +337,7 @@ return Math.min(Math.max(Math.floor(baseDensity), 40), 200);
   return (
     <canvas 
       ref={canvasRef} 
-      className="fixed left-0 top-0 -z-10 size-full bg-gradient-to-br from-black via-gray-900 to-gray-950"
+      className="fixed top-0 left-0 w-full h-full bg-gradient-to-br from-black via-gray-900 to-gray-950 -z-10"
       style={{
         background: 'radial-gradient(circle, rgba(0,20,10,1) 0%, rgba(0,10,5,1) 50%, rgba(0,0,0,1) 100%)'
       }}
