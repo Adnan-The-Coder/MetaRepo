@@ -7,12 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "pages:build": "bunx @cloudflare/next-on-pages",
-    "preview": "bun run pages:build && wrangler pages dev",
-    "deploy": "bun run pages:build && wrangler pages deploy"
+    "pages:build": "pnpm exec @cloudflare/next-on-pages",
+    "preview": "pnpm run pages:build && wrangler pages dev",
+    "deploy": "pnpm run pages:build && wrangler pages deploy"
   },
   "dependencies": {
-    "@cloudflare/next-on-pages": "^1.13.5",
     "@react-three/drei": "^9.99.0",
     "@react-three/fiber": "^8.15.16",
     "@supabase/supabase-js": "^2.49.1",
@@ -29,6 +28,7 @@
     "three": "^0.161.0"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.13",
     "@types/node": "^20",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

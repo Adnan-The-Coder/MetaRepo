@@ -14,9 +14,6 @@ importers:
 
   apps/main-site-v1:
     dependencies:
-      '@cloudflare/next-on-pages':
-        specifier: ^1.13.5
-        version: 1.13.13(vercel@45.0.9)(wrangler@4.30.0)
       '@react-three/drei':
         specifier: ^9.99.0
         version: 9.122.0(@react-three/fiber@8.18.0(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.161.0))(@types/react@18.3.23)(@types/three@0.179.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.161.0)(use-sync-external-store@1.5.0(react@18.3.1))
@@ -60,6 +57,9 @@ importers:
         specifier: ^0.161.0
         version: 0.161.0
     devDependencies:
+      '@cloudflare/next-on-pages':
+        specifier: ^1.13.13
+        version: 1.13.13(vercel@45.0.9)(wrangler@4.30.0)
       '@types/node':
         specifier: ^20
         version: 20.19.10
