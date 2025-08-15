@@ -7,8 +7,6 @@ on:
     branches: [main, dev, test]
 
 env:
-  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
   NODE_VERSION: '22.16.0'
 
 jobs:
@@ -47,7 +45,7 @@ jobs:
     strategy:
       matrix:
         app: ${{ fromJson(needs.setup.outputs.affected_apps) }}
-    env:                    
+    env:                                 # <-- ENV VARS HERE so they are available during build!
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
     steps:
