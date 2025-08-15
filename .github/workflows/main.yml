@@ -36,7 +36,9 @@ jobs:
       - name: Get affected apps
         id: set
         run: |
-          echo "affected_apps=$(pnpm exec nx show projects --affected --type=app --select=name)" >> "$GITHUB_OUTPUT"
+          affected=$(pnpm exec nx show projects --affected --type=app --select=name)
+          json_array=$(echo "$affected" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "affected_apps=$json_array" >> "$GITHUB_OUTPUT"
 
   build:
     needs: setup
