@@ -1,7 +1,7 @@
 name = "main-site-v1"
 compatibility_date = "2025-02-26"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "apps/main-site-v1/.vercel/output/static"
+pages_build_output_dir = ".vercel/output/static"
 
 [vars]
 NODE_VERSION = "22.16.0"
