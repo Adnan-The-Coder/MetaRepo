@@ -1,23 +1,23 @@
-name: Automated Web App Deployment to Cloudflare Workers
+name: Automated web-v1 App Deployment to Cloudflare Workers
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'apps/web/**'
+      - 'apps/web-v1/**'
   pull_request:
     branches:
       - main
     paths:
-      - 'apps/web/**'
+      - 'apps/web-v1/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/web   
+        working-directory: apps/web-v1-v1   
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -54,7 +54,7 @@ jobs:
 
       - name: Build OpenNext output
         run: pnpm exec opennextjs-cloudflare build
-        working-directory: apps/web
+        working-directory: apps/web-v1
 
     # Deploy using your package.json "deploy" script
       - name: Deploy to Cloudflare Workers
