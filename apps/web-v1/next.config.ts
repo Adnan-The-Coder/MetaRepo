@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+  instrumentationHook: false,
+}
+
 };
 
 export default nextConfig;
