@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import {  FaGithub } from "react-icons/fa";
+// import {  FaGithub } from "react-icons/fa";
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase client
@@ -138,7 +138,8 @@ const Contact: React.FC = () => {
                   </li>
                   <li className="flex items-start gap-4">
                     <span className="text-cyan-400 mt-1">
-                      <FaGithub />
+                      {/* <FaGithub /> */}
+                      github icon
                     </span>
                     <div>
                       <p className="text-sm text-gray-400">GitHub</p>
