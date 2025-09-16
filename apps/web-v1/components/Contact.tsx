@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { FaEnvelope, FaGithub } from "react-icons/fa";
+import {  FaGithub } from "react-icons/fa";
 import { createClient } from "@supabase/supabase-js";
 
 // Initialize Supabase client
@@ -123,7 +123,8 @@ const Contact: React.FC = () => {
                 <ul className="space-y-4">
                   <li className="flex items-start gap-4">
                     <span className="text-cyan-400 mt-1">
-                      <FaEnvelope />
+                      {/* <FaEnvelope /> */}
+                      envelope
                     </span>
                     <div>
                       <p className="text-sm text-gray-400">Email</p>
