@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "npmScope": "zeroday",
+  "npmScope": "main-codebase",
   "defaultBase": "main",
   "targetDefaults": {
     "build": {
@@ -46,7 +46,6 @@
   },
   "projects": {
     "web-v1": "apps/web-v1",
-    "python-backend": "apps/python-backend",
     "cf-server": "apps/cf-server"
   }
 }
