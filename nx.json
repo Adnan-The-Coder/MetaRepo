@@ -45,7 +45,7 @@
     "libsDir": "libs"
   },
   "projects": {
-    "web": "apps/web",
+    "web-v1": "apps/web-v1",
     "python-backend": "apps/python-backend",
     "cf-server": "apps/cf-server"
   }
