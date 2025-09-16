@@ -2,7 +2,6 @@ import {motion} from 'framer-motion';
 import { useRef } from 'react';
 import Image from 'next/image';
 import { FaGithub,FaLinkedin, FaEnvelope } from 'react-icons/fa';
-// testing
 
 function About() {
   const aboutRef = useRef<HTMLDivElement>(null);
