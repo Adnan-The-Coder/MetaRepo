@@ -1,6 +1,8 @@
-# Adnan's Development Universe
+### MetaRepo: The Development Universe
 
-🚀 A comprehensive monorepo containing my entire development ecosystem, including:
+A unified monorepo containing the full spectrum of projects I build, maintain, and experiment with — from open-source libraries and backend services to portfolio sites and exploratory prototypes.
+
+This repo isn't just a storage space — it's the backbone of my development workflow. Everything lives here: production-ready code, tools I share with the community, personal builds, and experimental ideas in progress.
 
 - **Portfolio Websites**: All versions of my personal portfolio (v1, v2, etc.)
 - **Backend Services**: Complete backend infrastructure and APIs
