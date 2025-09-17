@@ -59,10 +59,10 @@ const projects = [
     title: "PlantoMart",
     description: `Planto-Mart is a full stack Ecommerce Multi-Vendor Platform, enabling vendors to list products, facilitating customers to purchase products across different vendors. Each Vendor has it's own Dashboard to manage all of it's shop's products and view analytics and much more`,
     tech: ["Next.js", "bunJS", "Supabase", "TailwindCSS"],
-    link: "https://main-website-plantomart.pages.dev/",
+    link: "https://plantomart.com",
     image: "/assets/PlantoMart.png",
     featured: true,
-    githubLink: "https://github.com/Planto-Mart/Main-Website",
+    githubLink: "https://github.com/Adnan-The-Coder/plantomart-full-stack-application",
   },
   {
     title: "Desktop Assistant",
@@ -198,9 +198,9 @@ const skills = {
       level: 75,
     },
     {
-      name: "PostgreSQL",
-      icon: <SiPostgresql className="text-[#336791]" />,
-      level: 70,
+      name: "D1 Database",
+      icon: <SiCloudflare className="text-orange-500" />,
+      level: 95,
     },
     {
       name: "Supabase",
