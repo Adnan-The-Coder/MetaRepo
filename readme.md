@@ -273,7 +273,7 @@ The CI/CD pipeline must run error-free.
 
 ## 5. Conflict Resolution
 
-If any merge conflicts arise, contributors should immediately contact the [Adnan](https://github.com/Adnan-The-Coder) or [Nazish](https://github.com/nazish-16) for resolution.
+If any merge conflicts arise, contributors should immediately contact the [Adnan](https://github.com/Adnan-The-Coder) for resolution.
 
 ## 6. Emergency Procedure
 
