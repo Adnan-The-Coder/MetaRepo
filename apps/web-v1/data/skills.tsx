@@ -66,8 +66,8 @@ export const skills = {
   backend: [
     { name: "Node.js", icon: <FaNode className="text-[#68A063]" />, level: 70 },
     { name: "BunJS", icon: "🧄", level: 95 },
-    { name: "HonoJS", icon: "🔥", level: 47 },
-    { name: "Elysia", icon: "🏝️", level: 80 },
+    { name: "HonoJS", icon: "🔥", level: 87 },
+    { name: "Elysia", icon: "🏝️", level: 60 },
     { name: "Java", icon: <FaJava className="text-[#007396]" />, level: 24 },
     {
       name: "Python",
@@ -95,17 +95,17 @@ export const skills = {
     {
       name: "NeonDB",
       icon: <FaDatabase className="text-[#00E699]" />,
-      level: 50,
+      level: 60,
     },
     {
       name: "Drizzle ORM",
       icon: <SiReactivex className="text-[#B7178C]" />,
-      level: 65,
+      level: 95,
     },
     {
       name: "Prisma ORM",
       icon: <SiPrisma className="text-[#B7178C]" />,
-      level: 35,
+      level: 55,
     },
   ],
   infrastructure: [
@@ -115,8 +115,8 @@ export const skills = {
       level: 90,
     },
     { name: "Docker", icon: <FaDocker className="text-[#2496ED]" />, level: 82 },
-    { name: "Redis", icon: <FaDatabase className="text-[#D82C2C]" />, level: 85 },
-    { name: "GitHub Actions", icon: <SiGithub className="text-white" />, level: 76 },
+    { name: "Redis", icon: <FaDatabase className="text-[#D82C2C]" />, level: 75 },
+    { name: "GitHub Actions", icon: <SiGithub className="text-white" />, level: 86 },
     { name: "CI/CD Pipelines", icon: <BiGitBranch className="text-[#F05032]" />, level: 74 },
     { name: "Apache Kafka", icon: <SiApachekafka className="text-[#231F20]" />, level: 58 },
     {
