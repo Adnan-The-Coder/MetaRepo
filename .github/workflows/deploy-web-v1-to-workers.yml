@@ -59,7 +59,9 @@ jobs:
         run: pnpm exec opennextjs-cloudflare build
         working-directory: apps/web-v1  # Ensure consistency with the working-directory
 
-      # Deploy using your package.json "deploy" script
+      - name: Install wrangler CLI
+        run: pnpm add -g wrangler
+
       - name: Deploy to Cloudflare Workers
         run: pnpm run deploy
         env:
