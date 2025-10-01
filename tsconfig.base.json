@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@adnan-codes/super-auth": ["packages/super-auth/src/index.ts"],
+      "@main-codebase/*": ["libs/*"]
+    }
+  },
+  "exclude": ["node_modules", "tmp"]
+}

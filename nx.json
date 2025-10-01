@@ -4,9 +4,7 @@
   "defaultBase": "main",
   "targetDefaults": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "outputs": [
         "{projectRoot}/.next",
         "{projectRoot}/dist",
@@ -14,28 +12,17 @@
       ]
     },
     "lint": {
-      "inputs": [
-        "default",
-        "{projectRoot}/.eslintrc.json"
-      ]
+      "inputs": ["default", "{projectRoot}/.eslintrc.json"]
     },
     "test": {
-      "inputs": [
-        "default",
-        "^production"
-      ]
+      "inputs": ["default", "^production"]
     }
   },
   "tasksRunnerOptions": {
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "deploy"
-        ],
+        "cacheableOperations": ["build", "lint", "test", "deploy"],
         "parallel": 3
       }
     }
@@ -48,5 +35,32 @@
     "web-v1": "apps/web-v1",
     "web-v2": "apps/web-v2",
     "cf-server": "apps/cf-server"
-  }
+  },
+  "release": {
+    "version": {
+      "preVersionCommand": "pnpm dlx nx run-many -t build"
+    }
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/rollup/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "buildDepsTargetName": "build-deps",
+        "watchDepsTargetName": "watch-deps"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      }
+    }
+  ]
 }
