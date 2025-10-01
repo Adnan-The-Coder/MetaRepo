@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
@@ -142,17 +143,17 @@ const CyberParticleBackground = () => {
       update() {
         // Mouse repulsion effect
         if (mouse.x !== undefined && mouse.y !== undefined) {
-          let dx = mouse.x - this.x;
-          let dy = mouse.y - this.y;
-          let distance = Math.sqrt(dx * dx + dy * dy);
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
           
           if (distance < mouse.radius) {
-            let forceDirectionX = dx / distance;
-            let forceDirectionY = dy / distance;
-            let maxDistance = mouse.radius;
-            let force = (maxDistance - distance) / maxDistance;
-            let directionX = forceDirectionX * force * this.density * -1.5; // Stronger repulsion
-            let directionY = forceDirectionY * force * this.density * -1.5;
+            const forceDirectionX = dx / distance;
+            const forceDirectionY = dy / distance;
+            const maxDistance = mouse.radius;
+            const force = (maxDistance - distance) / maxDistance;
+            const directionX = forceDirectionX * force * this.density * -1.5; // Stronger repulsion
+            const directionY = forceDirectionY * force * this.density * -1.5;
             
             this.x += directionX;
             this.y += directionY;

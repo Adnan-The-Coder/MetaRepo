@@ -29,6 +29,7 @@ This repository serves as the single source of truth for my development work, en
     <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white" />
     <img alt="Pandas" src="https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white" />
     <img alt="Matplotlib" src="https://img.shields.io/badge/Matplotlib-003366?style=flat-square&logo=matplotlib&logoColor=white" />
+    <img alt="Jest" src="https://img.shields.io/badge/Jest-C21325?style=flat-square&logo=jest&logoColor=white" />
     <img alt="GitHub Actions" src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white" />
   </p>
 </div>
