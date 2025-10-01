@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 // import {  FaGithub } from "react-icons/fa";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { FaEnvelope, FaGithub } from "react-icons/fa";
 
 // Initialize Supabase client
 // You'll need to replace these with your actual Supabase URL and anon key
@@ -124,8 +125,8 @@ function Contact() {
                 <ul className="space-y-4">
                   <li className="flex items-start gap-4">
                     <span className="text-cyan-400 mt-1">
-                      {/* <FaEnvelope /> */}
-                      envelope
+                      <FaEnvelope />
+                      {/* envelope */}
                     </span>
                     <div>
                       <p className="text-sm text-gray-400">Email</p>
@@ -139,8 +140,8 @@ function Contact() {
                   </li>
                   <li className="flex items-start gap-4">
                     <span className="text-cyan-400 mt-1">
-                      {/* <FaGithub /> */}
-                      github icon
+                      <FaGithub />
+                      {/* github icon */}
                     </span>
                     <div>
                       <p className="text-sm text-gray-400">GitHub</p>
