@@ -11,7 +11,6 @@ type TerminalLine = {
   color: string;
 };
 
-
 type SystemStats = {
   cpu: number;
   memory: number;
@@ -137,10 +136,9 @@ const ParticleField = () => {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={count}
-          array={positions}
-          itemSize={3}
           args={[positions, 3]}
+          count={count}
+          itemSize={3}
         />
       </bufferGeometry>
       <pointsMaterial
@@ -204,7 +202,7 @@ const FloatingTerminal = ({ lines }: { lines: TerminalLine[] }) => {
   }, [lines]);
 
   return (
-    <div ref={containerRef} className="absolute left-8 top-1/2 -translate-y-1/2 space-y-3 z-30">
+    <div ref={containerRef} className="absolute left-8 top-1/2 -translate-y-1/2 space-y-3 z-[15] pointer-events-none">
       {lines.map((line, index) => (
         <div
           key={index}
@@ -238,7 +236,9 @@ const FloatingMetric = ({
   useEffect(() => {
     if (!metricRef.current) return;
 
-    gsap.fromTo(metricRef.current,
+    const element = metricRef.current;
+
+    gsap.fromTo(element,
       { opacity: 0, scale: 0.8, filter: 'blur(10px)' },
       { 
         opacity: 1, 
@@ -249,7 +249,7 @@ const FloatingMetric = ({
       }
     );
 
-    gsap.to(metricRef.current, {
+    gsap.to(element, {
       y: '+=10',
       duration: 2 + Math.random(),
       repeat: -1,
@@ -258,7 +258,7 @@ const FloatingMetric = ({
     });
 
     const handleMouseEnter = () => {
-      gsap.to(metricRef.current, {
+      gsap.to(element, {
         scale: 1.15,
         duration: 0.3,
         ease: 'power2.out'
@@ -266,26 +266,26 @@ const FloatingMetric = ({
     };
 
     const handleMouseLeave = () => {
-      gsap.to(metricRef.current, {
+      gsap.to(element, {
         scale: 1,
         duration: 0.3,
         ease: 'power2.out'
       });
     };
 
-    metricRef.current?.addEventListener('mouseenter', handleMouseEnter);
-    metricRef.current?.addEventListener('mouseleave', handleMouseLeave);
+    element.addEventListener('mouseenter', handleMouseEnter);
+    element.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
-      metricRef.current?.removeEventListener('mouseenter', handleMouseEnter);
-      metricRef.current?.removeEventListener('mouseleave', handleMouseLeave);
+      element.removeEventListener('mouseenter', handleMouseEnter);
+      element.removeEventListener('mouseleave', handleMouseLeave);
     };
   }, []);
 
   return (
     <div
       ref={metricRef}
-      className="absolute z-30 cursor-pointer hidden lg:block"
+      className="absolute z-[15] cursor-pointer hidden lg:block pointer-events-auto"
       style={position}
     >
       <div className="relative">
@@ -334,7 +334,7 @@ const Hero = () => {
     out: new Array(20).fill(25) 
   });
 
-  const commandSets = [
+  const commandSets = useMemo(() => [
     [
       { text: '$ git status', delay: 800, color: '#10b981' },
       { text: 'On branch main', delay: 300, color: '#cbd5e1' },
@@ -351,16 +351,16 @@ const Hero = () => {
       { text: '[INFO] Server started', delay: 400, color: '#3b82f6' },
       { text: '[INFO] Ready for requests', delay: 500, color: '#06b6d4' }
     ]
-  ];
+  ], []);
 
-  const processes = [
+  const processes = useMemo(() => [
     'node server.js',
     'nginx master', 
     'postgres main',
     'redis-server',
     'docker daemon',
     'kubectl proxy'
-  ];
+  ], []);
 
   // Hero entrance animation
   useEffect(() => {
@@ -393,7 +393,7 @@ const Hero = () => {
   useEffect(() => {
     let currentSet = 0;
     let currentCommand = 0;
-    let timeoutId: any;
+    let timeoutId: NodeJS.Timeout;
 
     const executeCommands = () => {
       const commandSet = commandSets[currentSet];
@@ -413,7 +413,7 @@ const Hero = () => {
 
     executeCommands();
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [commandSets]);
 
   // System stats simulation
   useEffect(() => {
@@ -437,7 +437,7 @@ const Hero = () => {
           cpu: newCpu,
           memory: newMemory,
           network: { in: newNetworkIn, out: newNetworkOut },
-          processes: processes.sort(() => 0.5 - Math.random()).slice(0, 4),
+          processes: [...processes].sort(() => 0.5 - Math.random()).slice(0, 4),
           temperature: 45 + Math.random() * 20,
           uptime: prev.uptime + 1
         };
@@ -446,7 +446,7 @@ const Hero = () => {
 
     const interval = setInterval(updateStats, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [processes]);
 
   // Mouse tracking
   useEffect(() => {
@@ -473,9 +473,17 @@ const Hero = () => {
 
   return (
     <div className="relative min-h-screen bg-black overflow-hidden" ref={heroRef}>
+      {/* ===== BACKGROUND LAYER (z-0 to z-10) ===== */}
       {/* 3D Canvas Background */}
-      <div className="absolute inset-0 z-0">
-        <Canvas camera={{ position: [0, 0, 15], fov: 75 }}>
+      <div 
+        className="fixed inset-0 pointer-events-none"
+        style={{ zIndex: 0 }}
+      >
+        <Canvas 
+          camera={{ position: [0, 0, 15], fov: 75 }}
+          style={{ pointerEvents: 'none' }}
+          gl={{ alpha: true }}
+        >
           <ambientLight intensity={0.2} />
           <pointLight position={[10, 10, 10]} intensity={0.8} color="#00ffff" />
           <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a855f7" />
@@ -498,43 +506,56 @@ const Hero = () => {
       </div>
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-transparent to-black/60 z-5" />
+      <div 
+        className="fixed inset-0 bg-gradient-to-br from-black/60 via-transparent to-black/60 pointer-events-none" 
+        style={{ zIndex: 1 }}
+      />
       
       {/* Cursor glow */}
       <div
-        className="fixed w-96 h-96 rounded-full pointer-events-none z-10 transition-all duration-300 opacity-15 hidden md:block"
+        className="fixed w-96 h-96 rounded-full pointer-events-none transition-all duration-300 opacity-15 hidden md:block"
         style={{
+          zIndex: 2,
           background: 'radial-gradient(circle, rgba(0,255,255,0.2) 0%, rgba(0,255,255,0.08) 40%, transparent 70%)',
           transform: `translate(${mousePosition.x - 192}px, ${mousePosition.y - 192}px)`,
           filter: 'blur(60px)'
         }}
       />
 
+      {/* ===== DECORATIVE LAYER (z-10 to z-20) ===== */}
       {/* Floating terminal */}
-      <FloatingTerminal lines={terminalLines} />
+      <div style={{ zIndex: 10 }}>
+        <FloatingTerminal lines={terminalLines} />
+      </div>
 
       {/* Floating metrics */}
-      <FloatingMetric 
-        label="CPU" 
-        value={systemStats.cpu} 
-        color="#00ffff"
-        position={{ top: '20%', right: '8%' }}
-      />
-      <FloatingMetric 
-        label="MEMORY" 
-        value={systemStats.memory} 
-        color="#a855f7"
-        position={{ top: '45%', right: '6%' }}
-      />
-      <FloatingMetric 
-        label="NETWORK" 
-        value={systemStats.network.in} 
-        color="#22c55e"
-        position={{ top: '70%', right: '10%' }}
-      />
+      <div style={{ zIndex: 10 }}>
+        <FloatingMetric 
+          label="CPU" 
+          value={systemStats.cpu} 
+          color="#00ffff"
+          position={{ top: '20%', right: '8%' }}
+        />
+        <FloatingMetric 
+          label="MEMORY" 
+          value={systemStats.memory} 
+          color="#a855f7"
+          position={{ top: '45%', right: '6%' }}
+        />
+        <FloatingMetric 
+          label="NETWORK" 
+          value={systemStats.network.in} 
+          color="#22c55e"
+          position={{ top: '70%', right: '10%' }}
+        />
+      </div>
 
+      {/* ===== CONTENT LAYER (z-50+) ===== */}
       {/* Main Content */}
-      <div className="relative z-20 min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
+      <div 
+        className="relative min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8"
+        style={{ zIndex: 50, isolation: 'isolate' }}
+      >
         
         {/* Status badge */}
         <div className="mb-8 animate-pulse">
@@ -572,13 +593,36 @@ const Hero = () => {
         </p>
 
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
-          <button className="cta-button group px-8 sm:px-10 py-3 sm:py-4 bg-white text-black font-semibold rounded-lg transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/50 overflow-hidden relative">
-            <span className="relative z-10">Explore Projects</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div 
+          className="relative flex flex-col sm:flex-row gap-4 sm:gap-5 w-full sm:w-auto px-4 sm:px-0 mb-8"
+          style={{ zIndex: 9999, position: 'relative' }}
+        >
+          <button 
+            className="cta-button group relative px-8 sm:px-10 py-3.5 sm:py-4 bg-white text-black font-semibold rounded-md transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-white/20 active:scale-95 cursor-pointer"
+            onClick={() => alert('Portfolio clicked!')}
+            style={{ opacity: 1, visibility: 'visible' }}
+          >
+            <span className="relative flex items-center justify-center gap-2 text-sm sm:text-base">
+              View Portfolio
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
           </button>
-          <button className="cta-button group px-8 sm:px-10 py-3 sm:py-4 border-2 border-cyan-500/40 text-cyan-300 font-semibold rounded-lg transition-all duration-300 hover:border-cyan-400 hover:bg-cyan-500/20 hover:shadow-xl hover:shadow-cyan-500/30 relative overflow-hidden">
-            <span className="relative z-10">Connect</span>
+          
+          <button 
+            className="cta-button group relative px-8 sm:px-10 py-3.5 sm:py-4 bg-transparent text-cyan-300 font-semibold rounded-md border-2 border-cyan-500/50 transition-all duration-300 hover:scale-105 hover:border-cyan-400/60 hover:bg-cyan-500/10 backdrop-blur-sm active:scale-95 cursor-pointer"
+            onClick={() => alert('Build Together clicked!')}
+            style={{ opacity: 1, visibility: 'visible' }}
+          >
+            <span className="relative flex items-center justify-center gap-2 text-sm sm:text-base">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+              </svg>
+              Build Together
+            </span>
+            <div className="absolute inset-0 border border-cyan-400/0 group-hover:border-cyan-400/40 rounded-md transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(0,255,255,0.3)]" />
           </button>
         </div>
 
@@ -614,11 +658,12 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Corner decorations */}
-      <div className="absolute top-0 left-0 w-12 h-12 lg:w-16 lg:h-16 border-l-2 border-t-2 border-cyan-500/30 z-50" />
-      <div className="absolute top-0 right-0 w-12 h-12 lg:w-16 lg:h-16 border-r-2 border-t-2 border-cyan-500/30 z-50" />
-      <div className="absolute bottom-0 left-0 w-12 h-12 lg:w-16 lg:h-16 border-l-2 border-b-2 border-cyan-500/30 z-50" />
-      <div className="absolute bottom-0 right-0 w-12 h-12 lg:w-16 lg:h-16 border-r-2 border-b-2 border-cyan-500/30 z-50" />
+      {/* ===== DECORATIVE CORNERS (z-5) ===== */}
+      {/* Corner decorations - BELOW content layer */}
+      <div className="fixed top-0 left-0 w-12 h-12 lg:w-16 lg:h-16 border-l-2 border-t-2 border-cyan-500/30 pointer-events-none" style={{ zIndex: 5 }} />
+      <div className="fixed top-0 right-0 w-12 h-12 lg:w-16 lg:h-16 border-r-2 border-t-2 border-cyan-500/30 pointer-events-none" style={{ zIndex: 5 }} />
+      <div className="fixed bottom-0 left-0 w-12 h-12 lg:w-16 lg:h-16 border-l-2 border-b-2 border-cyan-500/30 pointer-events-none" style={{ zIndex: 5 }} />
+      <div className="fixed bottom-0 right-0 w-12 h-12 lg:w-16 lg:h-16 border-r-2 border-b-2 border-cyan-500/30 pointer-events-none" style={{ zIndex: 5 }} />
     </div>
   );
 };
