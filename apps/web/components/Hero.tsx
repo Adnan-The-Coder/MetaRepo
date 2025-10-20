@@ -1,42 +1,336 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
+import { gsap } from 'gsap';
 
+// Types
 type TerminalLine = {
   text: string;
   delay: number;
   color: string;
 };
+
 type SystemStats = {
   cpu: number;
   memory: number;
-  network: {
-    in: number;
-    out: number;
-  };
+  network: { in: number; out: number };
   processes: string[];
   temperature: number;
   uptime: number;
 };
 
+// Clean 3D Volumetric Chart
+const VolumetricChart = ({ data, color, scale = 1 }: { data: number[]; color: string; scale?: number }) => {
+  const tubeRef = useRef<THREE.Mesh>(null);
+  const spheresRef = useRef<THREE.InstancedMesh>(null);
+  
+  const maxValue = Math.max(...data, 1);
+  const minValue = Math.min(...data, 0);
+  const range = maxValue - minValue || 1;
 
+  const points = useMemo(() => {
+    return data.map((value, index) => {
+      const x = (index / (data.length - 1)) * 6 - 3;
+      const y = ((value - minValue) / range) * 2 - 1;
+      const z = Math.sin(index * 0.3) * 0.2;
+      return new THREE.Vector3(x * scale, y * scale, z * scale);
+    });
+  }, [data, minValue, range, scale]);
+
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    
+    if (tubeRef.current) {
+      tubeRef.current.rotation.y = Math.sin(time * 0.2) * 0.1;
+    }
+
+    if (spheresRef.current) {
+      data.forEach((_, i) => {
+        const scale = 1 + Math.sin(time * 2 + i * 0.5) * 0.3;
+        const matrix = new THREE.Matrix4();
+        matrix.makeScale(scale, scale, scale);
+        matrix.setPosition(points[i]);
+        spheresRef.current!.setMatrixAt(i, matrix);
+      });
+      spheresRef.current.instanceMatrix.needsUpdate = true;
+    }
+  });
+
+  const colorObj = new THREE.Color(color);
+  const curve = new THREE.CatmullRomCurve3(points);
+
+  return (
+    <group>
+      {/* Main tube */}
+      <mesh ref={tubeRef}>
+        <tubeGeometry args={[curve, 64, 0.08, 8, false]} />
+        <meshBasicMaterial color={colorObj} transparent opacity={0.6} />
+      </mesh>
+
+      {/* Subtle glow */}
+      <mesh>
+        <tubeGeometry args={[curve, 64, 0.15, 8, false]} />
+        <meshBasicMaterial color={colorObj} transparent opacity={0.15} />
+      </mesh>
+
+      {/* Data points */}
+      <instancedMesh ref={spheresRef} args={[undefined, undefined, data.length]}>
+        <sphereGeometry args={[0.08, 12, 12]} />
+        <meshStandardMaterial 
+          color={colorObj} 
+          emissive={colorObj}
+          emissiveIntensity={0.4}
+          transparent 
+          opacity={0.85} 
+        />
+      </instancedMesh>
+    </group>
+  );
+};
+
+// Subtle particle field
+const ParticleField = () => {
+  const particlesRef = useRef<THREE.Points>(null);
+  const count = 500;
+
+  const [positions, velocities] = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const vel = [];
+    
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 40;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 20;
+      
+      vel.push({
+        x: (Math.random() - 0.5) * 0.015,
+        y: (Math.random() - 0.5) * 0.015,
+        z: (Math.random() - 0.5) * 0.01
+      });
+    }
+    
+    return [pos, vel];
+  }, []);
+
+  useFrame(() => {
+    if (!particlesRef.current) return;
+    
+    const positions = particlesRef.current.geometry.attributes.position.array as Float32Array;
+    
+    for (let i = 0; i < count; i++) {
+      positions[i * 3] += velocities[i].x;
+      positions[i * 3 + 1] += velocities[i].y;
+      positions[i * 3 + 2] += velocities[i].z;
+      
+      if (Math.abs(positions[i * 3]) > 20) velocities[i].x *= -1;
+      if (Math.abs(positions[i * 3 + 1]) > 20) velocities[i].y *= -1;
+      if (Math.abs(positions[i * 3 + 2]) > 10) velocities[i].z *= -1;
+    }
+    
+    particlesRef.current.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={particlesRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.04}
+        color="#00ffff"
+        transparent
+        opacity={0.25}
+        sizeAttenuation
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
+  );
+};
+
+// Enhanced Floating Terminal
+const FloatingTerminal = ({ lines }: { lines: TerminalLine[] }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const elements = containerRef.current.querySelectorAll('.terminal-line');
+    
+    elements.forEach((el, index) => {
+      gsap.fromTo(el,
+        { 
+          opacity: 0, 
+          x: -50,
+          filter: 'blur(10px)'
+        },
+        { 
+          opacity: 0.7, 
+          x: 0,
+          filter: 'blur(0px)',
+          duration: 0.8,
+          delay: index * 0.1,
+          ease: 'power2.out'
+        }
+      );
+
+      el.addEventListener('mouseenter', () => {
+        gsap.to(el, {
+          opacity: 1,
+          x: 10,
+          scale: 1.05,
+          duration: 0.3,
+          ease: 'power2.out'
+        });
+      });
+
+      el.addEventListener('mouseleave', () => {
+        gsap.to(el, {
+          opacity: 0.7,
+          x: 0,
+          scale: 1,
+          duration: 0.3,
+          ease: 'power2.out'
+        });
+      });
+    });
+  }, [lines]);
+
+  return (
+    <div ref={containerRef} className="absolute left-8 top-1/2 -translate-y-1/2 space-y-3 z-30">
+      {lines.map((line, index) => (
+        <div
+          key={index}
+          className="terminal-line font-mono text-base cursor-pointer transition-all"
+          style={{ 
+            color: line.color,
+            textShadow: `0 0 15px ${line.color}40`
+          }}
+        >
+          {line.text}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Floating Metric
+const FloatingMetric = ({ 
+  label, 
+  value, 
+  color, 
+  position 
+}: { 
+  label: string; 
+  value: number; 
+  color: string; 
+  position: { top?: string; bottom?: string; left?: string; right?: string };
+}) => {
+  const metricRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!metricRef.current) return;
+
+    gsap.fromTo(metricRef.current,
+      { opacity: 0, scale: 0.8, filter: 'blur(10px)' },
+      { 
+        opacity: 1, 
+        scale: 1, 
+        filter: 'blur(0px)',
+        duration: 1,
+        ease: 'back.out(1.7)'
+      }
+    );
+
+    gsap.to(metricRef.current, {
+      y: '+=10',
+      duration: 2 + Math.random(),
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    });
+
+    const handleMouseEnter = () => {
+      gsap.to(metricRef.current, {
+        scale: 1.15,
+        duration: 0.3,
+        ease: 'power2.out'
+      });
+    };
+
+    const handleMouseLeave = () => {
+      gsap.to(metricRef.current, {
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.out'
+      });
+    };
+
+    metricRef.current?.addEventListener('mouseenter', handleMouseEnter);
+    metricRef.current?.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      metricRef.current?.removeEventListener('mouseenter', handleMouseEnter);
+      metricRef.current?.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={metricRef}
+      className="absolute z-30 cursor-pointer hidden lg:block"
+      style={position}
+    >
+      <div className="relative">
+        <div 
+          className="absolute inset-0 blur-xl opacity-50"
+          style={{ backgroundColor: color }}
+        />
+        <div className="relative px-4 py-2 rounded-lg backdrop-blur-sm border"
+          style={{ 
+            borderColor: `${color}40`,
+            background: `linear-gradient(135deg, ${color}10, transparent)`
+          }}
+        >
+          <div className="text-xs font-mono opacity-70" style={{ color }}>
+            {label}
+          </div>
+          <div className="text-2xl font-bold font-mono" style={{ color }}>
+            {Math.round(value)}%
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main Hero Component
 const Hero = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [leftTerminalLines, setLeftTerminalLines] = useState<TerminalLine[]>([]);
-  const [rightSystemStats, setRightSystemStats] = useState<SystemStats>({
-  cpu: 0,
-  memory: 0,
-  network: { in: 0, out: 0 },
-  processes: [],
-  temperature: 0,
-  uptime: 0,
-});
+  const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([]);
+  const [systemStats, setSystemStats] = useState<SystemStats>({
+    cpu: 45,
+    memory: 60,
+    network: { in: 30, out: 25 },
+    processes: [],
+    temperature: 55,
+    uptime: 0
+  });
 
-  const canvasRef = useRef(null);
-  const overlayCanvasRef = useRef(null);
-  const animationRef = useRef<number | null>(null);
-  const cpuHistoryRef = useRef(new Array(20).fill(0));
-  const memoryHistoryRef = useRef(new Array(20).fill(0));
-  const networkHistoryRef = useRef({ in: new Array(20).fill(0), out: new Array(20).fill(0) });
+  const heroRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  const cpuHistoryRef = useRef(new Array(20).fill(45));
+  const memoryHistoryRef = useRef(new Array(20).fill(60));
+  const networkHistoryRef = useRef({ 
+    in: new Array(20).fill(30), 
+    out: new Array(20).fill(25) 
+  });
 
   const commandSets = [
     [
@@ -48,38 +342,62 @@ const Hero = () => {
     [
       { text: '$ docker ps', delay: 800, color: '#10b981' },
       { text: 'CONTAINER ID   STATUS', delay: 400, color: '#06b6d4' },
-      { text: 'f2a1c3d5e7   Up 2 hours', delay: 300, color: '#22c55e' },
-      { text: '$ kubectl get pods', delay: 1000, color: '#10b981' },
-      { text: 'portfolio-app   Running', delay: 400, color: '#22c55e' }
+      { text: 'f2a1c3d5e7   Up 2 hours', delay: 300, color: '#22c55e' }
     ],
     [
       { text: '$ tail -f app.log', delay: 800, color: '#10b981' },
       { text: '[INFO] Server started', delay: 400, color: '#3b82f6' },
-      { text: '[INFO] DB connected', delay: 300, color: '#22c55e' },
       { text: '[INFO] Ready for requests', delay: 500, color: '#06b6d4' }
     ]
   ];
 
   const processes = [
     'node server.js',
-    'nginx master',
+    'nginx master', 
     'postgres main',
     'redis-server',
     'docker daemon',
     'kubectl proxy'
   ];
 
+  // Hero entrance animation
+  useEffect(() => {
+    if (!titleRef.current) return;
+
+    const tl = gsap.timeline();
+    
+    tl.from(titleRef.current, {
+      scale: 0.5,
+      opacity: 0,
+      duration: 1.2,
+      ease: 'power4.out'
+    })
+    .from('.subtitle', {
+      y: 50,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power3.out'
+    }, '-=0.6')
+    .from('.cta-button', {
+      y: 30,
+      opacity: 0,
+      stagger: 0.2,
+      duration: 0.6,
+      ease: 'back.out(1.7)'
+    }, '-=0.4');
+  }, []);
+
   // Terminal animation
   useEffect(() => {
     let currentSet = 0;
     let currentCommand = 0;
-    let timeoutId:any;
+    let timeoutId: any;
 
     const executeCommands = () => {
       const commandSet = commandSets[currentSet];
       const command = commandSet[currentCommand];
 
-      setLeftTerminalLines(prev => [...prev, command].slice(-8));
+      setTerminalLines(prev => [...prev, command].slice(-8));
 
       currentCommand++;
       if (currentCommand >= commandSet.length) {
@@ -95,10 +413,10 @@ const Hero = () => {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // System stats
+  // System stats simulation
   useEffect(() => {
     const updateStats = () => {
-      setRightSystemStats((prev) => {
+      setSystemStats(prev => {
         const newCpu = Math.max(15, Math.min(95, prev.cpu + (Math.random() - 0.5) * 25));
         const newMemory = Math.max(25, Math.min(85, prev.memory + (Math.random() - 0.5) * 20));
         const newNetworkIn = Math.max(0, Math.min(100, prev.network.in + (Math.random() - 0.5) * 40));
@@ -106,10 +424,8 @@ const Hero = () => {
 
         cpuHistoryRef.current.push(newCpu);
         cpuHistoryRef.current.shift();
-        
         memoryHistoryRef.current.push(newMemory);
         memoryHistoryRef.current.shift();
-        
         networkHistoryRef.current.in.push(newNetworkIn);
         networkHistoryRef.current.in.shift();
         networkHistoryRef.current.out.push(newNetworkOut);
@@ -126,535 +442,181 @@ const Hero = () => {
       });
     };
 
-    setRightSystemStats({
-      cpu: 45 + Math.random() * 20,
-      memory: 60 + Math.random() * 15,
-      network: { in: 30 + Math.random() * 20, out: 25 + Math.random() * 15 },
-      processes: processes.slice(0, 4),
-      temperature: 55,
-      uptime: 0
-    });
-
     const interval = setInterval(updateStats, 2000);
     return () => clearInterval(interval);
   }, []);
 
-  // Enhanced background animation with integrated elements
+  // Mouse tracking
   useEffect(() => {
-    const canvas:any = canvasRef.current;
-    const overlayCanvas:any = overlayCanvasRef.current;
-    if (!canvas || !overlayCanvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    const overlayCtx = overlayCanvas.getContext('2d');
-    
-    const updateCanvasSize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      overlayCanvas.width = window.innerWidth;
-      overlayCanvas.height = window.innerHeight;
-    };
-    
-    updateCanvasSize();
-    window.addEventListener('resize', updateCanvasSize);
-
-    let time = 0;
-    
-    // Floating particles
-    const particles = Array.from({ length: 25 }, () => ({ // Reduced from 50 to 25
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.3, // Slower movement
-      vy: (Math.random() - 0.5) * 0.3,
-      alpha: Math.random() * 0.4 + 0.05, // More subtle
-      size: Math.random() * 1.5 + 0.3
-    }));
-
-    // Data streams for minimal effect
-    const dataStreams = Array.from({ length: 4 }, (_, i) => ({ // Reduced from 8 to 4
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      chars: '01',
-      speed: 1.5 + Math.random() * 2, // Slower
-      opacity: 0.2 + Math.random() * 0.2 // More subtle
-    }));
-    
-    const animate = () => {
-      // Clear both canvases
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-      
-      time += 0.01;
-
-      // Subtle data streams - minimal
-      dataStreams.forEach((stream, index) => {
-        if (index % 3 === 0) { // Only show every 3rd stream
-          overlayCtx.fillStyle = `rgba(0, 255, 255, ${stream.opacity * 0.1})`;
-          overlayCtx.font = '10px monospace';
-          
-          for (let i = 0; i < 5; i++) { // Reduced from 15 to 5
-            const char = stream.chars[Math.floor(Math.random() * stream.chars.length)];
-            overlayCtx.fillText(
-              char, 
-              stream.x, 
-              stream.y + i * 30 - (time * stream.speed * 20) % (canvas.height + 300)
-            );
-          }
-        }
-      });
-
-      // Floating particles - cleaner connections
-      particles.forEach((particle, index) => {
-        particle.x += particle.vx;
-        particle.y += particle.vy;
-        
-        if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
-        if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
-        
-        // Draw particle
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0, 255, 255, ${particle.alpha * 0.6})`;
-        ctx.fill();
-
-        // Connect only very close particles
-        particles.slice(index + 1).forEach(otherParticle => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 60) { // Reduced from 100 to 60
-            ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.strokeStyle = `rgba(0, 255, 255, ${(1 - distance / 60) * 0.05})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        });
-      });
-
-      // Central energy field - more subtle
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      
-      for (let ring = 1; ring <= 2; ring++) { // Reduced from 4 to 2 rings
-        const segments = ring * 6; // Reduced segments
-        const baseRadius = Math.min(canvas.width, canvas.height) * 0.08; // Smaller radius
-        
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * Math.PI * 2 + time * (ring % 2 === 0 ? 0.2 : -0.15);
-          const radius = ring * baseRadius + Math.sin(time * 1.2 + ring) * 8;
-          const x = centerX + Math.cos(angle) * radius;
-          const y = centerY + Math.sin(angle) * radius;
-          
-          const opacity = 0.05 + Math.sin(time * 1.5 + i + ring) * 0.02; // More subtle
-          const size = 0.8 + Math.sin(time * 1.5 + i) * 0.3;
-          
-          ctx.beginPath();
-          ctx.arc(x, y, size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(0, 255, 255, ${opacity})`;
-          ctx.fill();
-        }
-      }
-
-      // Subtle data flow streams
-      const streamCount = Math.max(2, Math.floor(canvas.height / 300)); // Reduced streams
-      for (let i = 0; i < streamCount; i++) {
-        const progress = (time * 0.3 + i / streamCount) % 1; // Slower
-        const startX = canvas.width * 0.1;
-        const endX = canvas.width * 0.9;
-        const y = canvas.height * 0.3 + (i * canvas.height * 0.2);
-        
-        const currentX = startX + (endX - startX) * progress;
-        
-        const gradient = ctx.createLinearGradient(currentX - 40, y, currentX, y);
-        gradient.addColorStop(0, 'rgba(0, 255, 255, 0)');
-        gradient.addColorStop(0.8, 'rgba(0, 255, 255, 0.08)');
-        gradient.addColorStop(1, 'rgba(0, 255, 255, 0.2)');
-        
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(Math.max(0, currentX - 40), y);
-        ctx.lineTo(currentX, y);
-        ctx.stroke();
-        
-        // Subtle data packets
-        if (progress > 0.2) {
-          ctx.beginPath();
-          ctx.arc(currentX, y, 1, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(0, 255, 255, 0.4)';
-          ctx.fill();
-        }
-      }
-      
-      animationRef.current = requestAnimationFrame(animate);
-    };
-    
-    animate();
-
-    return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      window.removeEventListener('resize', updateCanvasSize);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e:any) => {
+    const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
+      
+      if (heroRef.current) {
+        const { left, top, width, height } = heroRef.current.getBoundingClientRect();
+        const x = (e.clientX - left) / width - 0.5;
+        const y = (e.clientY - top) / height - 0.5;
+        
+        gsap.to(heroRef.current, {
+          rotationY: x * 2,
+          rotationX: -y * 2,
+          duration: 0.5,
+          ease: 'power2.out'
+        });
+      }
     };
+
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Enhanced SVG Chart Component with better visibility and styling
-  const MiniChart = ({ data, color, height = 30, showFill = true }:any) => {
-    const maxValue = Math.max(...data);
-    const minValue = Math.min(...data);
-    const range = maxValue - minValue || 1;
-    
-    return (
-      <svg width="100%" height={height} className="overflow-visible">
-        <defs>
-          <filter id={`glow-${color.replace('#', '')}`} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-            <feMerge> 
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-          <linearGradient id={`gradient-${color.replace('#', '')}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={color} stopOpacity="0.4"/>
-            <stop offset="50%" stopColor={color} stopOpacity="0.2"/>
-            <stop offset="100%" stopColor={color} stopOpacity="0.05"/>
-          </linearGradient>
-          <linearGradient id={`line-gradient-${color.replace('#', '')}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={color} stopOpacity="0.6"/>
-            <stop offset="50%" stopColor={color} stopOpacity="1"/>
-            <stop offset="100%" stopColor={color} stopOpacity="0.8"/>
-          </linearGradient>
-        </defs>
-        
-        {/* Background grid dots */}
-        {Array.from({ length: 5 }, (_, i) => (
-          <line
-            key={i}
-            x1="0"
-            x2="100"
-            y1={height * (i + 1) / 6}
-            y2={height * (i + 1) / 6}
-            stroke={color}
-            strokeOpacity="0.1"
-            strokeWidth="0.5"
-            strokeDasharray="1,2"
-          />
-        ))}
-        
-        {showFill && (
-          <path
-            d={`M0,${height} ${data.map((value:any, index:any) => {
-              const x = (index / (data.length - 1)) * 100;
-              const y = height - ((value - minValue) / range) * (height * 0.8) - height * 0.1;
-              return `L${x},${y}`;
-            }).join(' ')} L100,${height} Z`}
-            fill={`url(#gradient-${color.replace('#', '')})`}
-          />
-        )}
-        
-        {/* Main line with enhanced visibility */}
-        <polyline
-          points={data.map((value:any, index:any) => {
-            const x = (index / (data.length - 1)) * 100;
-            const y = height - ((value - minValue) / range) * (height * 0.8) - height * 0.1;
-            return `${x},${y}`;
-          }).join(' ')}
-          fill="none"
-          stroke={`url(#line-gradient-${color.replace('#', '')})`}
-          strokeWidth="2.5"
-          filter={`url(#glow-${color.replace('#', '')})`}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        
-        {/* Data points */}
-        {data.map((value:any, index:any) => {
-          const x = (index / (data.length - 1)) * 100;
-          const y = height - ((value - minValue) / range) * (height * 0.8) - height * 0.1;
-          return (
-            <circle
-              key={index}
-              cx={x}
-              cy={y}
-              r="1.5"
-              fill={color}
-              opacity={index === data.length - 1 ? "1" : "0.6"}
-              filter={`url(#glow-${color.replace('#', '')})`}
-            />
-          );
-        })}
-        
-        {/* Current value indicator */}
-        <circle
-          cx={100}
-          cy={height - ((data[data.length - 1] - minValue) / range) * (height * 0.8) - height * 0.1}
-          r="3"
-          fill={color}
-          opacity="0.8"
-        >
-          <animate attributeName="r" values="3;4;3" dur="2s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
-        </circle>
-      </svg>
-    );
-  };
-
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden">
-      {/* Multi-layer background */}
-      <canvas ref={canvasRef} className="absolute inset-0 z-0" />
-      <canvas ref={overlayCanvasRef} className="absolute inset-0 z-5 opacity-60" />
-      
-      {/* Subtle gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-radial from-cyan-900/5 via-transparent to-transparent z-10" />
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/10 via-transparent to-slate-900/10 z-15" />
+    <div className="relative min-h-screen bg-black overflow-hidden" ref={heroRef}>
+      {/* 3D Canvas Background */}
+      <div className="absolute inset-0 z-0">
+        <Canvas camera={{ position: [0, 0, 15], fov: 75 }}>
+          <ambientLight intensity={0.2} />
+          <pointLight position={[10, 10, 10]} intensity={0.8} color="#00ffff" />
+          <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a855f7" />
+          
+          <ParticleField />
+          
+          {/* 3D Charts */}
+          <group position={[-8, 3, -5]}>
+            <VolumetricChart data={cpuHistoryRef.current} color="#00ffff" scale={0.8} />
+          </group>
+          
+          <group position={[8, 2, -5]}>
+            <VolumetricChart data={memoryHistoryRef.current} color="#a855f7" scale={0.8} />
+          </group>
+          
+          <group position={[8, -2, -5]}>
+            <VolumetricChart data={networkHistoryRef.current.in} color="#22c55e" scale={0.6} />
+          </group>
+        </Canvas>
+      </div>
 
-      {/* Interactive mouse glow */}
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-transparent to-black/60 z-5" />
+      
+      {/* Cursor glow */}
       <div
-        className="fixed w-32 h-32 lg:w-64 lg:h-64 rounded-full pointer-events-none z-20 transition-all duration-700 ease-out opacity-15 hidden md:block"
+        className="fixed w-96 h-96 rounded-full pointer-events-none z-10 transition-all duration-300 opacity-15 hidden md:block"
         style={{
-          background: 'radial-gradient(circle, rgba(0,255,255,0.15) 0%, rgba(0,255,255,0.05) 30%, transparent 70%)',
-          transform: `translate(${mousePosition.x - 128}px, ${mousePosition.y - 128}px)`,
-          filter: 'blur(1px)'
+          background: 'radial-gradient(circle, rgba(0,255,255,0.2) 0%, rgba(0,255,255,0.08) 40%, transparent 70%)',
+          transform: `translate(${mousePosition.x - 192}px, ${mousePosition.y - 192}px)`,
+          filter: 'blur(60px)'
         }}
       />
 
-      {/* Mobile Layout */}
-      <div className="lg:hidden">
-        {/* Status indicators */}
-        {/* <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30">
-          <div className="flex items-center space-x-3 text-xs font-mono text-cyan-400/80">
-            <div className="flex items-center space-x-1">
-              <div className="w-1 h-1 bg-cyan-400 rounded-full animate-pulse" />
-              <span>ONLINE</span>
-            </div>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-400">PROD</span>
-          </div>
-        </div> */}
+      {/* Floating terminal */}
+      <FloatingTerminal lines={terminalLines} />
 
-        {/* Main content */}
-        <div className="relative z-25 px-4 py-16 text-center">
-          <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-3">
-            <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent drop-shadow-lg">
-              Adnan
-            </span>
-          </h1>
-          <h2 className="text-lg sm:text-xl font-light tracking-[0.25em] text-slate-300/90 mb-4">
-            FULL STACK DEVELOPER
-          </h2>
-          <p className="text-sm text-slate-400/80 max-w-xs mx-auto leading-relaxed mb-8">
-            Architecting scalable solutions with cutting-edge technologies
-          </p>
-          
-          <div className="flex flex-col gap-3 mb-12">
-            <button className="px-6 py-3 bg-white/90 text-black font-semibold rounded-lg hover:bg-white transition-all duration-300 backdrop-blur-sm">
-              Explore Projects
-            </button>
-            <button className="px-6 py-3 border border-cyan-500/30 text-cyan-300 font-semibold rounded-lg hover:border-cyan-400/50 hover:text-cyan-200 transition-all duration-300 backdrop-blur-sm">
-              Connect
-            </button>
-          </div>
-        </div>
+      {/* Floating metrics */}
+      <FloatingMetric 
+        label="CPU" 
+        value={systemStats.cpu} 
+        color="#00ffff"
+        position={{ top: '20%', right: '8%' }}
+      />
+      <FloatingMetric 
+        label="MEMORY" 
+        value={systemStats.memory} 
+        color="#a855f7"
+        position={{ top: '45%', right: '6%' }}
+      />
+      <FloatingMetric 
+        label="NETWORK" 
+        value={systemStats.network.in} 
+        color="#22c55e"
+        position={{ top: '70%', right: '10%' }}
+      />
 
-        {/* Floating system info */}
-        <div className="absolute top-1/2 left-4 transform -translate-y-1/2 space-y-4 z-25">
-          {/* Terminal lines */}
-          <div className="space-y-2">
-            {leftTerminalLines.slice(-3).map((line, index) => (
-              <div key={index} className="font-mono text-xs opacity-60 transition-all duration-500" style={{ color: line.color }}>
-                {line.text}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="absolute top-1/2 right-4 transform -translate-y-1/2 space-y-6 z-25">
-          {/* CPU */}
-          <div className="text-right">
-            <div className="text-xs font-mono text-cyan-400/80 mb-1">CPU {Math.round(rightSystemStats.cpu)}%</div>
-            <div className="w-16 h-4">
-              <MiniChart data={cpuHistoryRef.current.slice(-8)} color="#00ffff" height={16} showFill={false} />
-            </div>
-          </div>
-
-          {/* Memory */}
-          <div className="text-right">
-            <div className="text-xs font-mono text-purple-400/80 mb-1">MEM {Math.round(rightSystemStats.memory)}%</div>
-            <div className="w-16 h-4">
-              <MiniChart data={memoryHistoryRef.current.slice(-8)} color="#a855f7" height={16} showFill={false} />
-            </div>
-          </div>
-
-          {/* Network */}
-          <div className="text-right">
-            <div className="text-xs font-mono text-green-400/80 mb-1">NET</div>
-            <div className="w-16 h-3 mb-1">
-              <MiniChart data={networkHistoryRef.current.in.slice(-8)} color="#22c55e" height={12} showFill={false} />
-            </div>
-            <div className="w-16 h-3">
-              <MiniChart data={networkHistoryRef.current.out.slice(-8)} color="#16a34a" height={12} showFill={false} />
+      {/* Main Content */}
+      <div className="relative z-20 min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
+        
+        {/* Status badge */}
+        <div className="mb-8 animate-pulse">
+          <div className="px-4 py-2 rounded-full bg-cyan-500/10 backdrop-blur-md border border-cyan-500/30">
+            <div className="flex items-center space-x-2 text-xs font-mono text-cyan-400">
+              <div className="w-2 h-2 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/50" />
+              <span className="tracking-wider">SYSTEM ONLINE</span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Desktop Layout */}
-      <div className="hidden lg:block">
+        {/* Title */}
+        <h1 
+          ref={titleRef}
+          className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight mb-6 text-center"
+          style={{
+            background: 'linear-gradient(135deg, #ffffff 0%, #00ffff 50%, #a855f7 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            textShadow: '0 0 80px rgba(0,255,255,0.3)'
+          }}
+        >
+          Adnan
+        </h1>
+        
+        {/* Subtitle */}
+        <h2 className="subtitle text-xl sm:text-2xl lg:text-3xl font-light tracking-[0.3em] text-slate-300/90 mb-6 text-center">
+          FULL STACK DEVELOPER
+        </h2>
+        
+        {/* Description */}
+        <p className="subtitle text-sm sm:text-base lg:text-lg text-slate-400/80 max-w-2xl mx-auto leading-relaxed mb-12 text-center px-4">
+          Architecting scalable solutions with cutting-edge technologies
+        </p>
 
-        <div className="grid grid-cols-12 gap-8 h-screen p-8">
-          
-          {/* Left - Floating terminal */}
-          <div className="col-span-3 flex flex-col justify-center">
-            <div className="space-y-4">
-              <div className="text-cyan-400/80 font-mono text-sm mb-4 flex items-center">
-                <div className="w-2 h-2 bg-cyan-400 rounded-full mr-3 animate-pulse" />
-                ~/portfolio
-              </div>
-              <div className="space-y-3">
-                {leftTerminalLines.map((line, index) => (
-                  <div key={index} className="font-mono text-sm transition-all duration-500 opacity-80 hover:opacity-100" style={{ color: line.color }}>
-                    {line.text}
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* CTAs */}
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full sm:w-auto px-4 sm:px-0">
+          <button className="cta-button group px-8 sm:px-10 py-3 sm:py-4 bg-white text-black font-semibold rounded-lg transition-all duration-300 hover:shadow-2xl hover:shadow-cyan-500/50 overflow-hidden relative">
+            <span className="relative z-10">Explore Projects</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </button>
+          <button className="cta-button group px-8 sm:px-10 py-3 sm:py-4 border-2 border-cyan-500/40 text-cyan-300 font-semibold rounded-lg transition-all duration-300 hover:border-cyan-400 hover:bg-cyan-500/20 hover:shadow-xl hover:shadow-cyan-500/30 relative overflow-hidden">
+            <span className="relative z-10">Connect</span>
+          </button>
+        </div>
+
+        {/* Mobile metrics */}
+        <div className="lg:hidden mt-16 grid grid-cols-3 gap-3 w-full max-w-md px-4">
+          <div 
+            className="p-3 sm:p-4 rounded-xl backdrop-blur-sm border border-cyan-500/20"
+            style={{ background: 'linear-gradient(135deg, rgba(0,255,255,0.1), transparent)' }}
+          >
+            <div className="text-xs font-mono text-cyan-400 mb-1">CPU</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{Math.round(systemStats.cpu)}%</div>
           </div>
-
-          {/* Center */}
-          <div className="col-span-6 flex flex-col justify-center items-center text-center relative z-25">
-            <h1 className="text-7xl xl:text-8xl font-black tracking-tight mb-6">
-              <span className="bg-gradient-to-r from-white via-slate-300 to-slate-900 bg-clip-text text-transparent drop-shadow-2xl">
-                Adnan
-              </span>
-            </h1>
-            <h2 className="text-2xl xl:text-3xl font-light tracking-[0.3em] text-slate-300/90 mb-10">
-              FULL STACK DEVELOPER
-            </h2>
-            <p className="text-lg text-slate-400/80 max-w-2xl mx-auto leading-relaxed mb-16">
-              Architecting scalable solutions with cutting-edge technologies
-            </p>
-
-            <div className="flex gap-8 mb-20">
-              <button className="px-10 py-4 bg-white/90 text-black font-semibold rounded-lg hover:bg-white transition-all duration-300 hover:scale-105 hover:shadow-xl backdrop-blur-sm">
-                Explore Projects
-              </button>
-              <button className="px-10 py-4 border border-cyan-500/30 text-cyan-300 font-semibold rounded-lg hover:border-cyan-400/50 hover:text-cyan-200 transition-all duration-300 hover:scale-105 backdrop-blur-sm">
-                Connect
-              </button>
-            </div>
-
-            <div className="absolute bottom-8 flex flex-col items-center space-y-3 text-slate-500/60 animate-bounce">
-              <span className="text-xs font-mono">SCROLL</span>
-              <div className="w-px h-8 bg-gradient-to-b from-slate-500/60 to-transparent" />
-            </div>
+          <div 
+            className="p-3 sm:p-4 rounded-xl backdrop-blur-sm border border-purple-500/20"
+            style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.1), transparent)' }}
+          >
+            <div className="text-xs font-mono text-purple-400 mb-1">MEM</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{Math.round(systemStats.memory)}%</div>
           </div>
-
-          {/* Right - Floating system stats */}
-          <div className="col-span-3 flex flex-col justify-center space-y-8">
-            
-            {/* CPU */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-cyan-300 font-mono text-sm flex items-center">
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full mr-3 animate-pulse shadow-lg shadow-cyan-400/50" />
-                  CPU
-                </div>
-                <span className="text-xl font-mono text-white font-bold drop-shadow-lg">{Math.round(rightSystemStats.cpu)}%</span>
-              </div>
-              <div className="h-12 mb-3">
-                <MiniChart data={cpuHistoryRef.current} color="#00ffff" height={48} />
-              </div>
-              <div className="flex justify-between text-xs font-mono text-slate-300/80">
-                <span>8 cores</span>
-                <span>{Math.round(rightSystemStats.temperature)}°C</span>
-              </div>
-            </div>
-
-            {/* Memory */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-purple-300 font-mono text-sm flex items-center">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full mr-3 animate-pulse shadow-lg shadow-purple-400/50" />
-                  MEMORY
-                </div>
-                <span className="text-xl font-mono text-white font-bold drop-shadow-lg">{Math.round(rightSystemStats.memory)}%</span>
-              </div>
-              <div className="h-12 mb-3">
-                <MiniChart data={memoryHistoryRef.current} color="#a855f7" height={48} />
-              </div>
-              <div className="text-xs font-mono text-slate-300/80">
-                {(rightSystemStats.memory * 0.16).toFixed(1)}GB / 16GB
-              </div>
-            </div>
-
-            {/* Network */}
-            <div className="space-y-4">
-              <div className="text-green-300 font-mono text-sm flex items-center">
-                <div className="w-2 h-2 bg-green-400 rounded-full mr-3 animate-pulse shadow-lg shadow-green-400/50" />
-                NETWORK I/O
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm font-mono text-slate-200/90 mb-2 flex items-center justify-between">
-                    <span>↓ DOWNLOAD</span>
-                    <span className="text-green-300 font-bold">{Math.round(rightSystemStats.network.in)} MB/s</span>
-                  </div>
-                  <div className="h-8">
-                    <MiniChart data={networkHistoryRef.current.in} color="#22c55e" height={32} />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-mono text-slate-200/90 mb-2 flex items-center justify-between">
-                    <span>↑ UPLOAD</span>
-                    <span className="text-green-300 font-bold">{Math.round(rightSystemStats.network.out)} MB/s</span>
-                  </div>
-                  <div className="h-8">
-                    <MiniChart data={networkHistoryRef.current.out} color="#16a34a" height={32} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Processes */}
-            <div className="space-y-4">
-              <div className="text-yellow-300 font-mono text-sm flex items-center">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3 animate-pulse shadow-lg shadow-yellow-400/50" />
-                PROCESSES
-              </div>
-              <div className="space-y-3">
-                {rightSystemStats.processes.map((process, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm font-mono">
-                    <span className="text-slate-200/90 truncate mr-3">{process}</span>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full opacity-80 animate-pulse shadow-sm shadow-green-400/50" />
-                      <span className="text-green-300 text-xs">ACTIVE</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div 
+            className="p-3 sm:p-4 rounded-xl backdrop-blur-sm border border-green-500/20"
+            style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.1), transparent)' }}
+          >
+            <div className="text-xs font-mono text-green-400 mb-1">NET</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{Math.round(systemStats.network.in)}</div>
           </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center space-y-2 text-slate-500/60">
+          <span className="text-xs font-mono tracking-wider">SCROLL</span>
+          <div className="w-px h-12 bg-gradient-to-b from-slate-500/60 to-transparent animate-pulse" />
         </div>
       </div>
 
-      {/* Minimal corner decorations */}
-      <div className="absolute top-0 left-0 w-8 h-8 lg:w-12 lg:h-12 border-l border-t border-cyan-500/20 z-40" />
-      <div className="absolute top-0 right-0 w-8 h-8 lg:w-12 lg:h-12 border-r border-t border-cyan-500/20 z-40" />
-      <div className="absolute bottom-0 left-0 w-8 h-8 lg:w-12 lg:h-12 border-l border-b border-cyan-500/20 z-40" />
-      <div className="absolute bottom-0 right-0 w-8 h-8 lg:w-12 lg:h-12 border-r border-b border-cyan-500/20 z-40" />
+      {/* Corner decorations */}
+      <div className="absolute top-0 left-0 w-12 h-12 lg:w-16 lg:h-16 border-l-2 border-t-2 border-cyan-500/30 z-50" />
+      <div className="absolute top-0 right-0 w-12 h-12 lg:w-16 lg:h-16 border-r-2 border-t-2 border-cyan-500/30 z-50" />
+      <div className="absolute bottom-0 left-0 w-12 h-12 lg:w-16 lg:h-16 border-l-2 border-b-2 border-cyan-500/30 z-50" />
+      <div className="absolute bottom-0 right-0 w-12 h-12 lg:w-16 lg:h-16 border-r-2 border-b-2 border-cyan-500/30 z-50" />
     </div>
   );
 };
