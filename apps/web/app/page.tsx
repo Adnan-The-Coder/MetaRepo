@@ -1,6 +1,7 @@
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
+import Portfolio from "@/components/Portfolio";
 // import Background from "@/components/ui/Background-raw-dotted";
 // import Background from "@/components/ui/Background-cursor-based-glow";
 // import Background from "@/components/ui/Background-github-graph-like";
@@ -13,7 +14,8 @@ export default function Home() {
     <Navbar/>
     {/* <br /> */}
     <Hero/>
-		<Footer/>
+	<Portfolio/>
+	<Footer/>
 		</>
 	
 	);
