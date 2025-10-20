@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -8,19 +7,17 @@ import {
   SiJavascript,
   SiMongodb,
   SiPostgresql,
-  SiSupabase,
-  SiCloudflare,
   SiTailwindcss,
+  SiCloudflare,
+  SiSupabase,
   SiC,
   SiGooglecloud,
   SiBlockchaindotcom,
-  SiReactivex,
   SiBlender,
   SiApachekafka,
   SiGithub,
 } from "react-icons/si";
 import {
-  FaGithub,
   FaServer,
   FaDatabase,
   FaReact,
@@ -28,13 +25,11 @@ import {
   FaCode,
   FaJava,
   FaPython,
-  FaCar,
-  FaVideo,
   FaBook,
   FaDocker,
 } from "react-icons/fa";
 import { MdApi } from "react-icons/md";
-import { GiBrain, GiCube, GiJetFighter } from "react-icons/gi";
+import { GiBrain, GiJetFighter } from "react-icons/gi";
 import { BiGitBranch } from "react-icons/bi";
 
 // Advanced Sci-Fi Sound System with Realistic Effects
