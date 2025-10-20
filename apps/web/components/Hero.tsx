@@ -11,6 +11,7 @@ type TerminalLine = {
   color: string;
 };
 
+
 type SystemStats = {
   cpu: number;
   memory: number;
